@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Personal Health Dashboard">
+  <title>Health Dashboard · 2026-08-30</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --text: #c9d1d9;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --border: #30363d;
+      --danger: #f85149;
+      --success: #3fb950;
+      --warning: #d29922;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #ffffff;
+        --card: #f6f8fa;
+        --text: #24292f;
+        --muted: #57606a;
+        --accent: #0969da;
+        --border: #d0d7de;
+        --danger: #cf222e;
+        --success: #1a7f37;
+        --warning: #9a6700;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+    header .updated {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      padding: 10px 16px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 0.95rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    .tab.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+      font-weight: 600;
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    h1, h2, h3, h4 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+    h1 { font-size: 1.3rem; }
+    h2 { font-size: 1.15rem; color: var(--accent); }
+    h3 { font-size: 1rem; }
+    p { margin: 0 0 10px 0; }
+    ul, ol { padding-left: 20px; margin: 0 0 10px 0; }
+    li { margin-bottom: 4px; }
+    blockquote {
+      margin: 0 0 10px 0;
+      padding: 8px 12px;
+      border-left: 4px solid var(--accent);
+      background: rgba(88, 166, 255, 0.08);
+      border-radius: 0 8px 8px 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    strong { color: var(--text); }
+    a { color: var(--accent); text-decoration: none; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+    th {
+      background: rgba(88, 166, 255, 0.1);
+      font-weight: 600;
+    }
+    pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+      background: rgba(175, 184, 193, 0.15);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    pre code { background: none; padding: 0; }
+    .mermaid {
+      background: var(--card);
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 12px;
+    }
+    footer {
+      margin-top: 24px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Personal Health Dashboard</h1>
+      <div class="updated">Updated: 2026-08-30 14:43 </div>
+    </header>
+    <div class="tabs">
+      <button class="tab active" data-target="today" onclick="showPanel('today')">Today</button>
+      <button class="tab" data-target="dashboard" onclick="showPanel('dashboard')">Dashboard</button>
+    </div>
+    <div id="today" class="panel active">
+      <hr />
+<h2>date: 2026-08-30</h2>
+<h1>2026-08-30 · 周日</h1>
+<blockquote>
+<p>本文件由 render_views.py 从 health.db 自动生成，请勿手改。</p>
+</blockquote>
+<h2>Morning Briefing</h2>
+<ul>
+<li><strong>睡眠</strong>：7.75 小时（评分 86）</li>
+<li><strong>HRV</strong>：53 ms（BALANCED）</li>
+<li><strong>静息心率</strong>：50 bpm</li>
+<li><strong>Body Battery</strong>：100</li>
+<li><strong>准备度</strong>：8/10</li>
+<li><strong>建议</strong>：准备度 8/10：睡眠 7.75h 评分 86（GOOD），HRV 53 平衡，RHR 50，Body Battery 100。恢复时间 4.7h，Garmin 显示 HIGH / WELL_RECOVERED。昨天 10km 后恢复优秀，但仍有 4.7h 恢复负债，今天建议中等强度训练或主动恢复，避免高强度间歇/大重量极限，RPE≤8</li>
+</ul>
+<h2>身体组成</h2>
+<ul>
+<li><strong>体重</strong>：70.35 kg</li>
+<li><strong>体脂率</strong>：22.9 %</li>
+<li><strong>脂肪量</strong>：16.1 kg</li>
+<li><strong>肌肉量</strong>：50.5 kg</li>
+</ul>
+<h2>训练</h2>
+<ul>
+<li>待记录</li>
+</ul>
+<h2>饮食</h2>
+<h3>午餐</h3>
+<ul>
+<li>红烧牛肉面 400g：700 kcal | 41.2g 蛋白质 | 78.0g 碳水 | 18.0g 脂肪</li>
+<li>烫油麦菜 200g：80 kcal | 4.0g 蛋白质 | 10.0g 碳水 | 1.0g 脂肪</li>
+<li>鲜虾云吞 180g：72 kcal | 5.4g 蛋白质 | 7.2g 碳水 | 2.7g 脂肪</li>
+<li><strong>小计</strong>：852 kcal | P 50.6g | C 95.2g | F 21.7g</li>
+</ul>
+<h2>今日累计</h2>
+<ul>
+<li><strong>热量</strong>：852.0 kcal</li>
+<li><strong>蛋白质</strong>：50.6 g</li>
+<li><strong>碳水</strong>：95.2 g</li>
+<li><strong>脂肪</strong>：21.7 g</li>
+<li><strong>训练消耗</strong>：0 kcal</li>
+</ul>
+<h2>备注</h2>
+<ul>
+<li>Garmin sleep/HRV 今日(2026-08-30)未同步，采用最近同步数据(2026-08-29)估算准备度</li>
+</ul>
+    </div>
+    <div id="dashboard" class="panel">
+      <h1>健康仪表盘</h1>
+<blockquote>
+<p>自动生成于 2026-08-30 12:59 · 数据源 health.db · 勿手改</p>
+</blockquote>
+<h2>今日</h2>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>最新体重</td>
+<td>70.35 kg（体脂 22.9%）</td>
+</tr>
+<tr>
+<td>准备度</td>
+<td>8/10</td>
+</tr>
+<tr>
+<td>睡眠</td>
+<td>7.8 h</td>
+</tr>
+<tr>
+<td>已摄入</td>
+<td>852 / 2000 kcal · 蛋白 51 / 140 g</td>
+</tr>
+</tbody>
+</table>
+<h2>体重趋势</h2>
+<div class="mermaid">xychart-beta
+    title "近几次称重"
+    x-axis ["08-23", "08-24", "08-25", "08-26", "08-27", "08-28", "08-29", "08-30"]
+    y-axis "kg" 69.5 --> 71.2
+    line [70.6, 70.65, 70.7, 70.15, 70.05, 70.55, 70.5, 70.35]</div>
+
+<h2>近 7 天热量 vs 目标</h2>
+<div class="mermaid">xychart-beta
+    title "热量摄入 vs 目标线"
+    x-axis ["08-24", "08-25", "08-26", "08-27", "08-28", "08-29", "08-30"]
+    y-axis "kcal" 0 --> 2300.0
+    bar [1678.1, 1768.2, 1687.9, 1850.8, 1621.4, 1910.2, 852]
+    line [2000, 2000, 2000, 2000, 2000, 2000, 2000]</div>
+
+<h2>近 7 天蛋白质 vs 目标</h2>
+<div class="mermaid">xychart-beta
+    title "蛋白质 vs 目标线"
+    x-axis ["08-24", "08-25", "08-26", "08-27", "08-28", "08-29", "08-30"]
+    y-axis "g" 0 --> 200.0
+    bar [165.6, 158.8, 146.7, 161.1, 138.3, 136.3, 50.6]
+    line [140, 140, 140, 140, 140, 140, 140]</div>
+
+<h2>准备度</h2>
+<div class="mermaid">xychart-beta
+    title "准备度（1-10）"
+    x-axis ["08-17", "08-18", "08-19", "08-20", "08-21", "08-22", "08-23", "08-24", "08-25", "08-26", "08-27", "08-28", "08-29", "08-30"]
+    y-axis "分" 0 --> 10
+    line [8, 8, 7, 7.5, 6.5, 8, 8, 8, 8, 8, 9, 9, 9, 8]</div>
+
+<h2>近 7 天训练</h2>
+<table>
+<thead>
+<tr>
+<th>日期</th>
+<th>类型</th>
+<th>训练</th>
+<th>时长</th>
+<th>消耗</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2026-08-29</td>
+<td>有氧训练</td>
+<td>九龙跑步 10km</td>
+<td>73 min</td>
+<td>768 kcal</td>
+</tr>
+<tr>
+<td>2026-08-28</td>
+<td>力量训练</td>
+<td>胸部力量训练</td>
+<td>56 min</td>
+<td>282 kcal</td>
+</tr>
+<tr>
+<td>2026-08-26</td>
+<td>力量训练</td>
+<td>力量训练</td>
+<td>41 min</td>
+<td>328 kcal</td>
+</tr>
+<tr>
+<td>2026-08-26</td>
+<td>有氧训练</td>
+<td>HIIT</td>
+<td>35 min</td>
+<td>355 kcal</td>
+</tr>
+<tr>
+<td>2026-08-25</td>
+<td>有氧训练</td>
+<td>5km 轻松跑</td>
+<td>30 min</td>
+<td>343 kcal</td>
+</tr>
+<tr>
+<td>2026-08-24</td>
+<td>力量训练</td>
+<td>背部力量训练</td>
+<td>52 min</td>
+<td>255 kcal</td>
+</tr>
+<tr>
+<td>2026-08-23</td>
+<td>力量训练</td>
+<td>力量训练（腿/核心）</td>
+<td>83 min</td>
+<td>501 kcal</td>
+</tr>
+</tbody>
+</table>
+    </div>
+    <footer>Generated from Obsidian vault · <a href="https://github.com/champwwu/hermes-public">Source</a></footer>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    function showPanel(id) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelector(`[data-target="${id}"]`).classList.add('active');
+      if (window.mermaid) { mermaid.init(undefined, document.querySelectorAll('.mermaid')); }
+    }
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    }
+  </script>
+</body>
+</html>
