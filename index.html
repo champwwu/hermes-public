@@ -606,7 +606,7 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
       async function decrypt(armoredData, password) {
         const privateKeyArmored = $('pgp-private-key').textContent.trim();
         const privateKey = await openpgp.decryptKey({
-          privateKey: await openpgp.readPrivateKey({ armored: privateKeyArmored }),
+          privateKey: await openpgp.readPrivateKey({ armoredKey: privateKeyArmored }),
           passphrase: password
         });
         const message = await openpgp.readMessage({ armoredMessage: armoredData });
