@@ -2,360 +2,934 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Personal Health Dashboard">
-  <title>Health Dashboard · 2026-08-30</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Health Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/openpgp@5.11.2/dist/openpgp.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <style>
     :root {
-      --bg: #0d1117;
-      --card: #161b22;
-      --text: #c9d1d9;
-      --muted: #8b949e;
-      --accent: #58a6ff;
-      --border: #30363d;
-      --danger: #f85149;
-      --success: #3fb950;
-      --warning: #d29922;
+      --bg: #0b0d11;
+      --surface: #151922;
+      --surface-2: #1e2330;
+      --border: rgba(255,255,255,0.08);
+      --text: #f0f2f5;
+      --text-2: #9aa3b2;
+      --accent: #22d3ee;
+      --accent-2: #818cf8;
+      --success: #4ade80;
+      --warning: #facc15;
+      --danger: #fb7185;
+      --radius: 18px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.35);
     }
-    @media (prefers-color-scheme: light) {
-      :root {
-        --bg: #ffffff;
-        --card: #f6f8fa;
-        --text: #24292f;
-        --muted: #57606a;
-        --accent: #0969da;
-        --border: #d0d7de;
-        --danger: #cf222e;
-        --success: #1a7f37;
-        --warning: #9a6700;
-      }
-    }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; min-height: 100vh; }
     body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.6;
+      line-height: 1.5;
+      font-size: 15px;
     }
-    .container {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 16px;
-    }
-    header {
-      margin-bottom: 20px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-    }
-    header h1 {
-      margin: 0;
-      font-size: 1.4rem;
-      font-weight: 600;
-    }
-    header .updated {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-    .tabs {
+    .hidden { display: none !important; }
+
+    /* Login */
+    .login-screen {
+      min-height: 100vh;
       display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-      border-bottom: 1px solid var(--border);
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(34,211,238,0.12) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(129,140,248,0.12) 0%, transparent 40%),
+        var(--bg);
     }
-    .tab {
-      padding: 10px 16px;
-      background: none;
-      border: none;
-      color: var(--muted);
-      font-size: 0.95rem;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-    }
-    .tab.active {
-      color: var(--text);
-      border-bottom-color: var(--accent);
-      font-weight: 600;
-    }
-    .panel { display: none; }
-    .panel.active { display: block; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    h1, h2, h3, h4 {
-      margin-top: 0;
-      margin-bottom: 12px;
-      line-height: 1.3;
-    }
-    h1 { font-size: 1.3rem; }
-    h2 { font-size: 1.15rem; color: var(--accent); }
-    h3 { font-size: 1rem; }
-    p { margin: 0 0 10px 0; }
-    ul, ol { padding-left: 20px; margin: 0 0 10px 0; }
-    li { margin-bottom: 4px; }
-    blockquote {
-      margin: 0 0 10px 0;
-      padding: 8px 12px;
-      border-left: 4px solid var(--accent);
-      background: rgba(88, 166, 255, 0.08);
-      border-radius: 0 8px 8px 0;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-    strong { color: var(--text); }
-    a { color: var(--accent); text-decoration: none; }
-    table {
+    .login-card {
       width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 12px;
-      font-size: 0.9rem;
-    }
-    th, td {
-      padding: 8px 10px;
+      max-width: 380px;
+      background: rgba(21,25,34,0.85);
+      backdrop-filter: blur(20px);
       border: 1px solid var(--border);
-      text-align: left;
-    }
-    th {
-      background: rgba(88, 166, 255, 0.1);
-      font-weight: 600;
-    }
-    pre {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      overflow-x: auto;
-      font-size: 0.85rem;
-    }
-    code {
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
-      background: rgba(175, 184, 193, 0.15);
-      padding: 2px 5px;
-      border-radius: 4px;
-      font-size: 0.9em;
-    }
-    pre code { background: none; padding: 0; }
-    .mermaid {
-      background: var(--card);
-      border-radius: 8px;
-      padding: 8px;
-      margin-bottom: 12px;
-    }
-    footer {
-      margin-top: 24px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-      font-size: 0.75rem;
-      color: var(--muted);
+      border-radius: var(--radius);
+      padding: 36px 28px;
+      box-shadow: var(--shadow);
       text-align: center;
     }
+    .login-card h1 {
+      margin: 0 0 8px;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .login-card p {
+      margin: 0 0 28px;
+      color: var(--text-2);
+      font-size: 0.92rem;
+    }
+    .lock-icon {
+      width: 64px; height: 64px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem;
+      box-shadow: 0 4px 20px rgba(34,211,238,0.25);
+    }
+    .input-group { position: relative; margin-bottom: 16px; }
+    .input-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input-group input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(34,211,238,0.12);
+    }
+    button.primary {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #000;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+    button.primary:active { transform: scale(0.98); }
+    button.primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error-msg {
+      color: var(--danger);
+      font-size: 0.85rem;
+      margin-top: 12px;
+      min-height: 1.2em;
+    }
+
+    /* Dashboard */
+    .dashboard {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+      animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .dashboard-header h1 { margin: 0; font-size: 1.3rem; font-weight: 700; }
+    .dashboard-header .date { color: var(--text-2); font-size: 0.9rem; }
+    .logout-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-2);
+      margin: 0 0 14px;
+      font-weight: 600;
+    }
+
+    /* Macro cards */
+    .macro-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    @media (min-width: 640px) { .macro-grid { grid-template-columns: repeat(4, 1fr); } }
+    .macro-card {
+      background: var(--surface-2);
+      border-radius: 14px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .macro-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--accent);
+      opacity: 0.8;
+    }
+    .macro-card.protein::before { background: var(--success); }
+    .macro-card.carbs::before { background: var(--warning); }
+    .macro-card.fat::before { background: var(--danger); }
+    .macro-label { font-size: 0.8rem; color: var(--text-2); margin-bottom: 4px; }
+    .macro-value { font-size: 1.6rem; font-weight: 700; margin-bottom: 6px; }
+    .macro-unit { font-size: 0.75rem; color: var(--text-2); font-weight: 500; }
+    .macro-bar-bg {
+      height: 6px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .macro-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+    .macro-card.kcal .macro-bar-fill { background: var(--accent); }
+    .macro-card.protein .macro-bar-fill { background: var(--success); }
+    .macro-card.carbs .macro-bar-fill { background: var(--warning); }
+    .macro-card.fat .macro-bar-fill { background: var(--danger); }
+
+    /* Body metrics */
+    .body-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .body-item {
+      background: var(--surface-2);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .body-item .label { font-size: 0.8rem; color: var(--text-2); margin-bottom: 4px; }
+    .body-item .value { font-size: 1.3rem; font-weight: 700; }
+    .body-item .delta {
+      font-size: 0.75rem;
+      margin-top: 4px;
+      color: var(--text-2);
+    }
+    .delta.up { color: var(--danger); }
+    .delta.down { color: var(--success); }
+
+    /* Meals */
+    .date-picker {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .date-picker select, .date-picker button {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+    .date-picker button { cursor: pointer; }
+    .meal-section { margin-bottom: 14px; }
+    .meal-type {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .meal-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.92rem;
+    }
+    .meal-item:last-child { border-bottom: none; }
+    .meal-name { color: var(--text); }
+    .meal-qty { color: var(--text-2); font-size: 0.8rem; margin-left: 6px; }
+    .meal-cals { color: var(--text-2); font-size: 0.85rem; }
+
+    /* Section totals */
+    .section-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-top: 10px;
+      font-size: 0.9rem;
+    }
+    .section-total strong { color: var(--text); }
+
+    /* Recovery */
+    .recovery-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    @media (min-width: 640px) { .recovery-grid { grid-template-columns: repeat(3, 1fr); } }
+    .recovery-item {
+      background: var(--surface-2);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .recovery-item .label { font-size: 0.75rem; color: var(--text-2); margin-bottom: 4px; }
+    .recovery-item .value { font-size: 1.2rem; font-weight: 700; }
+    .readiness-score {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 700;
+      margin-bottom: 8px;
+      background: conic-gradient(var(--accent) calc(var(--score) * 10%), var(--surface-2) 0);
+    }
+
+    /* Charts */
+    .chart-container {
+      position: relative;
+      height: 220px;
+      margin-top: 8px;
+    }
+    .chart-tabs {
+      display: flex; gap: 8px; margin-bottom: 12px;
+    }
+    .chart-tab {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .chart-tab.active {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Workouts */
+    .workout-list { display: flex; flex-direction: column; gap: 10px; }
+    .workout-item {
+      background: var(--surface-2);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .workout-name { font-weight: 600; }
+    .workout-meta { color: var(--text-2); font-size: 0.8rem; margin-top: 2px; }
+    .workout-cals { font-size: 0.9rem; color: var(--accent); }
+
+    /* Phase progress */
+    .phase-bar-bg {
+      height: 10px;
+      background: var(--surface-2);
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    .phase-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 5px;
+      transition: width 0.6s ease;
+    }
+
+    /* Loading */
+    .loading {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; gap: 16px; color: var(--text-2);
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .muted { color: var(--text-2); }
+    .empty-state { text-align: center; padding: 30px 0; color: var(--text-2); font-size: 0.9rem; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Personal Health Dashboard</h1>
-      <div class="updated">Updated: 2026-08-30 14:51 </div>
-    </header>
-    <div class="tabs">
-      <button class="tab active" data-target="today" onclick="showPanel('today')">Today</button>
-      <button class="tab" data-target="dashboard" onclick="showPanel('dashboard')">Dashboard</button>
-    </div>
-    <div id="today" class="panel active">
-      <hr />
-<h2>date: 2026-08-30</h2>
-<h1>2026-08-30 · 周日</h1>
-<blockquote>
-<p>本文件由 render_views.py 从 health.db 自动生成，请勿手改。</p>
-</blockquote>
-<h2>Morning Briefing</h2>
-<ul>
-<li><strong>睡眠</strong>：7.75 小时（评分 86）</li>
-<li><strong>HRV</strong>：53 ms（BALANCED）</li>
-<li><strong>静息心率</strong>：50 bpm</li>
-<li><strong>Body Battery</strong>：100</li>
-<li><strong>准备度</strong>：8/10</li>
-<li><strong>建议</strong>：准备度 8/10：睡眠 7.75h 评分 86（GOOD），HRV 53 平衡，RHR 50，Body Battery 100。恢复时间 4.7h，Garmin 显示 HIGH / WELL_RECOVERED。昨天 10km 后恢复优秀，但仍有 4.7h 恢复负债，今天建议中等强度训练或主动恢复，避免高强度间歇/大重量极限，RPE≤8</li>
-</ul>
-<h2>身体组成</h2>
-<ul>
-<li><strong>体重</strong>：70.35 kg</li>
-<li><strong>体脂率</strong>：22.9 %</li>
-<li><strong>脂肪量</strong>：16.1 kg</li>
-<li><strong>肌肉量</strong>：50.5 kg</li>
-</ul>
-<h2>训练</h2>
-<ul>
-<li>待记录</li>
-</ul>
-<h2>饮食</h2>
-<h3>午餐</h3>
-<ul>
-<li>红烧牛肉面 400g：700 kcal | 41.2g 蛋白质 | 78.0g 碳水 | 18.0g 脂肪</li>
-<li>烫油麦菜 200g：80 kcal | 4.0g 蛋白质 | 10.0g 碳水 | 1.0g 脂肪</li>
-<li>鲜虾云吞 180g：72 kcal | 5.4g 蛋白质 | 7.2g 碳水 | 2.7g 脂肪</li>
-<li><strong>小计</strong>：852 kcal | P 50.6g | C 95.2g | F 21.7g</li>
-</ul>
-<h2>今日累计</h2>
-<ul>
-<li><strong>热量</strong>：852.0 kcal</li>
-<li><strong>蛋白质</strong>：50.6 g</li>
-<li><strong>碳水</strong>：95.2 g</li>
-<li><strong>脂肪</strong>：21.7 g</li>
-<li><strong>训练消耗</strong>：0 kcal</li>
-</ul>
-<h2>备注</h2>
-<ul>
-<li>Garmin sleep/HRV 今日(2026-08-30)未同步，采用最近同步数据(2026-08-29)估算准备度</li>
-</ul>
-    </div>
-    <div id="dashboard" class="panel">
-      <h1>健康仪表盘</h1>
-<blockquote>
-<p>自动生成于 2026-08-30 12:59 · 数据源 health.db · 勿手改</p>
-</blockquote>
-<h2>今日</h2>
-<table>
-<thead>
-<tr>
-<th>指标</th>
-<th>值</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>最新体重</td>
-<td>70.35 kg（体脂 22.9%）</td>
-</tr>
-<tr>
-<td>准备度</td>
-<td>8/10</td>
-</tr>
-<tr>
-<td>睡眠</td>
-<td>7.8 h</td>
-</tr>
-<tr>
-<td>已摄入</td>
-<td>852 / 2000 kcal · 蛋白 51 / 140 g</td>
-</tr>
-</tbody>
-</table>
-<h2>体重趋势</h2>
-<div class="mermaid">xychart-beta
-    title "近几次称重"
-    x-axis ["08-23", "08-24", "08-25", "08-26", "08-27", "08-28", "08-29", "08-30"]
-    y-axis "kg" 69.5 --> 71.2
-    line [70.6, 70.65, 70.7, 70.15, 70.05, 70.55, 70.5, 70.35]</div>
-
-<h2>近 7 天热量 vs 目标</h2>
-<div class="mermaid">xychart-beta
-    title "热量摄入 vs 目标线"
-    x-axis ["08-24", "08-25", "08-26", "08-27", "08-28", "08-29", "08-30"]
-    y-axis "kcal" 0 --> 2300.0
-    bar [1678.1, 1768.2, 1687.9, 1850.8, 1621.4, 1910.2, 852]
-    line [2000, 2000, 2000, 2000, 2000, 2000, 2000]</div>
-
-<h2>近 7 天蛋白质 vs 目标</h2>
-<div class="mermaid">xychart-beta
-    title "蛋白质 vs 目标线"
-    x-axis ["08-24", "08-25", "08-26", "08-27", "08-28", "08-29", "08-30"]
-    y-axis "g" 0 --> 200.0
-    bar [165.6, 158.8, 146.7, 161.1, 138.3, 136.3, 50.6]
-    line [140, 140, 140, 140, 140, 140, 140]</div>
-
-<h2>准备度</h2>
-<div class="mermaid">xychart-beta
-    title "准备度（1-10）"
-    x-axis ["08-17", "08-18", "08-19", "08-20", "08-21", "08-22", "08-23", "08-24", "08-25", "08-26", "08-27", "08-28", "08-29", "08-30"]
-    y-axis "分" 0 --> 10
-    line [8, 8, 7, 7.5, 6.5, 8, 8, 8, 8, 8, 9, 9, 9, 8]</div>
-
-<h2>近 7 天训练</h2>
-<table>
-<thead>
-<tr>
-<th>日期</th>
-<th>类型</th>
-<th>训练</th>
-<th>时长</th>
-<th>消耗</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>2026-08-29</td>
-<td>有氧训练</td>
-<td>九龙跑步 10km</td>
-<td>73 min</td>
-<td>768 kcal</td>
-</tr>
-<tr>
-<td>2026-08-28</td>
-<td>力量训练</td>
-<td>胸部力量训练</td>
-<td>56 min</td>
-<td>282 kcal</td>
-</tr>
-<tr>
-<td>2026-08-26</td>
-<td>力量训练</td>
-<td>力量训练</td>
-<td>41 min</td>
-<td>328 kcal</td>
-</tr>
-<tr>
-<td>2026-08-26</td>
-<td>有氧训练</td>
-<td>HIIT</td>
-<td>35 min</td>
-<td>355 kcal</td>
-</tr>
-<tr>
-<td>2026-08-25</td>
-<td>有氧训练</td>
-<td>5km 轻松跑</td>
-<td>30 min</td>
-<td>343 kcal</td>
-</tr>
-<tr>
-<td>2026-08-24</td>
-<td>力量训练</td>
-<td>背部力量训练</td>
-<td>52 min</td>
-<td>255 kcal</td>
-</tr>
-<tr>
-<td>2026-08-23</td>
-<td>力量训练</td>
-<td>力量训练（腿/核心）</td>
-<td>83 min</td>
-<td>501 kcal</td>
-</tr>
-</tbody>
-</table>
-    </div>
-    <footer>Generated from Obsidian vault · <a href="https://github.com/champwwu/hermes-public">Source</a></footer>
+  <!-- Loading Screen -->
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <div>加载中...</div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+  <!-- Login Screen -->
+  <div id="login-screen" class="login-screen hidden">
+    <div class="login-card">
+      <div class="lock-icon">🔒</div>
+      <h1>Health Dashboard</h1>
+      <p>数据已加密，请输入密码解锁</p>
+      <div class="input-group">
+        <input type="password" id="password" placeholder="输入密码" autocomplete="off">
+      </div>
+      <button class="primary" id="unlock-btn">解锁</button>
+      <div class="error-msg" id="login-error"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="dashboard hidden">
+    <div class="dashboard-header">
+      <div>
+        <h1 id="greeting">Hello</h1>
+        <div class="date" id="today-date"></div>
+      </div>
+      <button class="logout-btn" id="logout-btn">退出</button>
+    </div>
+
+    <!-- Macro Cards -->
+    <div class="card">
+      <div class="card-title">今日摄入</div>
+      <div class="macro-grid" id="macro-cards"></div>
+    </div>
+
+    <!-- Meal Log -->
+    <div class="card">
+      <div class="card-title">饮食记录</div>
+      <div class="date-picker">
+        <select id="meal-date-select"></select>
+        <button id="prev-day">← 前一天</button>
+        <button id="next-day">后一天 →</button>
+      </div>
+      <div id="meal-content"></div>
+      <div class="section-total">
+        <span>当日累计</span>
+        <span id="meal-total"></span>
+      </div>
+    </div>
+
+    <!-- Body Metrics -->
+    <div class="card">
+      <div class="card-title">身体指标</div>
+      <div class="body-grid" id="body-metrics"></div>
+    </div>
+
+    <!-- Recovery -->
+    <div class="card">
+      <div class="card-title">恢复 / 准备度</div>
+      <div class="recovery-grid" id="recovery-grid"></div>
+      <div class="section-total" id="readiness-advice" style="margin-top:14px;white-space:pre-wrap;line-height:1.5;"></div>
+    </div>
+
+    <!-- Phase Progress -->
+    <div class="card">
+      <div class="card-title">阶段进度</div>
+      <div id="phase-info" class="muted"></div>
+      <div class="phase-bar-bg"><div class="phase-bar-fill" id="phase-fill"></div></div>
+    </div>
+
+    <!-- Trends -->
+    <div class="card">
+      <div class="card-title">趋势</div>
+      <div class="chart-tabs">
+        <button class="chart-tab active" data-period="7">7 天</button>
+        <button class="chart-tab" data-period="30">30 天</button>
+      </div>
+      <div id="charts-container">
+        <div class="chart-container"><canvas id="weight-chart"></canvas></div>
+        <div class="chart-container"><canvas id="macros-chart"></canvas></div>
+        <div class="chart-container"><canvas id="recovery-chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Workouts -->
+    <div class="card">
+      <div class="card-title">今日训练</div>
+      <div class="workout-list" id="workout-list"></div>
+    </div>
+  </div>
+
+  <!-- Encrypted private key embedded here -->
+  <script type="text/template" id="pgp-private-key">
+-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+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
+=1MZG
+-----END PGP PRIVATE KEY BLOCK-----
+
+  </script>
+
   <script>
-    function showPanel(id) {
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      document.querySelector(`[data-target="${id}"]`).classList.add('active');
-      if (window.mermaid) { mermaid.init(undefined, document.querySelectorAll('.mermaid')); }
-    }
-    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-      mermaid.initialize({ startOnLoad: true, theme: 'default' });
-    }
+    (function() {
+      const APP = { data: null, charts: {} };
+
+      function $(id) { return document.getElementById(id); }
+
+      function formatNum(n, digits=1) {
+        if (n === null || n === undefined || isNaN(n)) return '—';
+        return Number(n).toFixed(digits);
+      }
+
+      function show(id) { $(id).classList.remove('hidden'); }
+      function hide(id) { $(id).classList.add('hidden'); }
+
+      async function loadEncryptedData() {
+        const res = await fetch('data.enc');
+        if (!res.ok) throw new Error('无法加载加密数据');
+        return await res.text();
+      }
+
+      async function decrypt(armoredData, password) {
+        const privateKeyArmored = $('pgp-private-key').textContent.trim();
+        const privateKey = await openpgp.decryptKey({
+          privateKey: await openpgp.readPrivateKey({ armored: privateKeyArmored }),
+          passphrase: password
+        });
+        const message = await openpgp.readMessage({ armoredMessage: armoredData });
+        const { data: decrypted } = await openpgp.decrypt({
+          message,
+          decryptionKeys: privateKey
+        });
+        return JSON.parse(decrypted);
+      }
+
+      function renderMacros(today, targets) {
+        const m = today.macros || {kcal:0, protein_g:0, carbs_g:0, fat_g:0};
+        const items = [
+          { key: 'kcal', label: '热量', unit: 'kcal', cls: 'kcal', target: targets.kcal },
+          { key: 'protein_g', label: '蛋白质', unit: 'g', cls: 'protein', target: targets.protein_g },
+          { key: 'carbs_g', label: '碳水', unit: 'g', cls: 'carbs', target: targets.carbs_g },
+          { key: 'fat_g', label: '脂肪', unit: 'g', cls: 'fat', target: targets.fat_g },
+        ];
+        $('macro-cards').innerHTML = items.map(it => {
+          const v = m[it.key] || 0;
+          const pct = Math.min(100, Math.max(0, (v / it.target) * 100));
+          return `
+            <div class="macro-card ${it.cls}">
+              <div class="macro-label">${it.label}</div>
+              <div class="macro-value">${formatNum(v, 0)}<span class="macro-unit"> / ${it.target}${it.unit}</span></div>
+              <div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${pct}%"></div></div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function renderMeals(data) {
+        const dates = data.history.dates;
+        const mealsByDate = data.history._mealsByDate || {};
+        const select = $('meal-date-select');
+        select.innerHTML = dates.slice().reverse().map(d => `<option value="${d}">${d}</option>`).join('');
+        select.value = data.today.date;
+
+        function renderDate(date) {
+          const dayMeals = mealsByDate[date] || {};
+          const total = data.history.macros[data.history.dates.indexOf(date)] || {kcal:0, protein_g:0, carbs_g:0, fat_g:0};
+          const order = ['早餐','午餐','晚餐','加餐','上午加餐','其他'];
+          const types = Object.keys(dayMeals).sort((a,b) => order.indexOf(a)-order.indexOf(b));
+          let html = '';
+          if (types.length === 0) {
+            html = '<div class="empty-state">当日无饮食记录</div>';
+          } else {
+            for (const t of types) {
+              html += `<div class="meal-section"><div class="meal-type">${t}</div>`;
+              for (const item of dayMeals[t]) {
+                html += `
+                  <div class="meal-item">
+                    <div><span class="meal-name">${item.item}</span><span class="meal-qty">${item.qty_text || ''}</span></div>
+                    <div class="meal-cals">${formatNum(item.kcal, 0)} kcal</div>
+                  </div>`;
+              }
+              html += '</div>';
+            }
+          }
+          $('meal-content').innerHTML = html;
+          $('meal-total').innerHTML = `${formatNum(total.kcal,0)} kcal · 蛋白 ${formatNum(total.protein_g,1)}g · 碳水 ${formatNum(total.carbs_g,1)}g · 脂肪 ${formatNum(total.fat_g,1)}g`;
+        }
+
+        renderDate(data.today.date);
+        select.addEventListener('change', () => renderDate(select.value));
+        $('prev-day').addEventListener('click', () => {
+          const idx = data.history.dates.indexOf(select.value);
+          if (idx > 0) { select.value = data.history.dates[idx-1]; renderDate(select.value); }
+        });
+        $('next-day').addEventListener('click', () => {
+          const idx = data.history.dates.indexOf(select.value);
+          if (idx < data.history.dates.length-1) { select.value = data.history.dates[idx+1]; renderDate(select.value); }
+        });
+      }
+
+      function renderBodyMetrics(data) {
+        const today = data.today.body || {};
+        const hist = data.history.body;
+        const lastIdx = hist.length - 1;
+        const prev = lastIdx > 0 ? hist[lastIdx-1] : null;
+
+        function delta(v, pv) {
+          if (!v || !pv) return '';
+          const d = v - pv;
+          const cls = d > 0 ? 'up' : (d < 0 ? 'down' : '');
+          const sign = d > 0 ? '+' : '';
+          return `<div class="delta ${cls}">${sign}${formatNum(d,2)} vs 上次</div>`;
+        }
+
+        $('body-metrics').innerHTML = `
+          <div class="body-item">
+            <div class="label">体重</div>
+            <div class="value">${formatNum(today.weight_kg, 2)} <span style="font-size:0.8rem;color:var(--text-2)">kg</span></div>
+            ${delta(today.weight_kg, prev?.weight_kg)}
+          </div>
+          <div class="body-item">
+            <div class="label">体脂率</div>
+            <div class="value">${formatNum(today.body_fat_pct, 1)}<span style="font-size:0.8rem;color:var(--text-2)">%</span></div>
+            ${delta(today.body_fat_pct, prev?.body_fat_pct)}
+          </div>
+          <div class="body-item">
+            <div class="label">肌肉量</div>
+            <div class="value">${formatNum(today.muscle_mass_kg, 1)} <span style="font-size:0.8rem;color:var(--text-2)">kg</span></div>
+            ${delta(today.muscle_mass_kg, prev?.muscle_mass_kg)}
+          </div>
+          <div class="body-item">
+            <div class="label">脂肪量</div>
+            <div class="value">${formatNum(today.fat_mass_kg, 1)} <span style="font-size:0.8rem;color:var(--text-2)">kg</span></div>
+            ${delta(today.fat_mass_kg, prev?.fat_mass_kg)}
+          </div>
+        `;
+      }
+
+      function renderRecovery(today) {
+        const r = today.recovery || {};
+        const score = r.readiness_score || 0;
+        $('recovery-grid').innerHTML = `
+          <div class="recovery-item">
+            <div class="label">准备度</div>
+            <div class="readiness-score" style="--score:${score}">${Math.round(score)}</div>
+          </div>
+          <div class="recovery-item">
+            <div class="label">睡眠</div>
+            <div class="value">${r.sleep_min ? (r.sleep_min/60).toFixed(2) + 'h' : '—'}</div>
+            <div class="delta">评分 ${r.sleep_score || '—'}</div>
+          </div>
+          <div class="recovery-item">
+            <div class="label">HRV</div>
+            <div class="value">${r.hrv_ms || '—'} <span style="font-size:0.7rem">ms</span></div>
+            <div class="delta">${r.hrv_status || ''}</div>
+          </div>
+          <div class="recovery-item">
+            <div class="label">静息心率</div>
+            <div class="value">${r.rhr || '—'} <span style="font-size:0.7rem">bpm</span></div>
+          </div>
+          <div class="recovery-item">
+            <div class="label">Body Battery</div>
+            <div class="value">${r.body_battery || '—'}</div>
+          </div>
+          <div class="recovery-item">
+            <div class="label">主观疲劳</div>
+            <div class="value">${r.fatigue_subj || '—'}</div>
+          </div>
+        `;
+        $('readiness-advice').textContent = r.briefing_advice || '暂无建议';
+      }
+
+      function renderPhase(data) {
+        const p = data.phase || {};
+        const start = p.start ? new Date(p.start) : null;
+        const end = p.end ? new Date(p.end) : null;
+        if (start && end) {
+          const now = new Date(data.today.date);
+          const total = end - start;
+          const elapsed = now - start;
+          const pct = Math.max(0, Math.min(100, (elapsed / total) * 100));
+          const daysLeft = Math.ceil((end - now) / (1000*60*60*24));
+          $('phase-info').innerHTML = `阶段 ${p.phase || '1'} · ${p.start} 至 ${p.end} · 剩余 ${daysLeft} 天`;
+          $('phase-fill').style.width = pct + '%';
+        } else {
+          $('phase-info').textContent = '阶段信息未配置';
+          $('phase-fill').style.width = '0%';
+        }
+      }
+
+      function renderWorkouts(today) {
+        const ws = today.workouts || [];
+        if (ws.length === 0) {
+          $('workout-list').innerHTML = '<div class="empty-state">今日无训练记录</div>';
+          return;
+        }
+        $('workout-list').innerHTML = ws.map(w => `
+          <div class="workout-item">
+            <div>
+              <div class="workout-name">${w.name || w.type || '训练'}</div>
+              <div class="workout-meta">${w.duration_min || 0} 分钟 · ${(w.distance_km || 0).toFixed(2)} km</div>
+            </div>
+            <div class="workout-cals">${w.calories || 0} kcal</div>
+          </div>
+        `).join('');
+      }
+
+      function destroyCharts() {
+        Object.values(APP.charts).forEach(c => c && c.destroy());
+        APP.charts = {};
+      }
+
+      function renderCharts(data, period) {
+        destroyCharts();
+        const labels = data.history.dates.slice(-period);
+        const body = data.history.body.slice(-period);
+        const macros = data.history.macros.slice(-period);
+        const rec = data.history.recovery.slice(-period);
+
+        const weights = body.map(b => b?.weight_kg || null);
+        const bodyFat = body.map(b => b?.body_fat_pct || null);
+
+        const ctxW = $('weight-chart').getContext('2d');
+        APP.charts.weight = new Chart(ctxW, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              { label: '体重 (kg)', data: weights, borderColor: '#22d3ee', backgroundColor: 'rgba(34,211,238,0.1)', tension: 0.3, fill: true, pointRadius: 3 },
+              { label: '体脂率 (%)', data: bodyFat, borderColor: '#fb7185', backgroundColor: 'rgba(251,113,133,0.05)', tension: 0.3, fill: false, pointRadius: 3, yAxisID: 'y1' }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { labels: { color: '#9aa3b2' } } },
+            scales: {
+              x: { ticks: { color: '#9aa3b2' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+              y: { ticks: { color: '#9aa3b2' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+              y1: { position: 'right', ticks: { color: '#fb7185' }, grid: { drawOnChartArea: false } }
+            }
+          }
+        });
+
+        const ctxM = $('macros-chart').getContext('2d');
+        APP.charts.macros = new Chart(ctxM, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              { label: '热量 (kcal)', data: macros.map(m => m.kcal), backgroundColor: 'rgba(34,211,238,0.7)' },
+              { label: '蛋白质 (g)', data: macros.map(m => m.protein_g), backgroundColor: 'rgba(74,222,128,0.7)' },
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#9aa3b2' } } },
+            scales: {
+              x: { ticks: { color: '#9aa3b2' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+              y: { ticks: { color: '#9aa3b2' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+          }
+        });
+
+        const ctxR = $('recovery-chart').getContext('2d');
+        APP.charts.recovery = new Chart(ctxR, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              { label: '准备度', data: rec.map(r => r?.readiness_score || null), borderColor: '#818cf8', backgroundColor: 'rgba(129,140,248,0.1)', tension: 0.3, fill: true, pointRadius: 3 },
+              { label: 'HRV', data: rec.map(r => r?.hrv_ms || null), borderColor: '#4ade80', tension: 0.3, fill: false, pointRadius: 3, yAxisID: 'y1' }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { labels: { color: '#9aa3b2' } } },
+            scales: {
+              x: { ticks: { color: '#9aa3b2' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+              y: { ticks: { color: '#9aa3b2' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+              y1: { position: 'right', ticks: { color: '#4ade80' }, grid: { drawOnChartArea: false } }
+            }
+          }
+        });
+      }
+
+      function renderAll() {
+        const data = APP.data;
+        const today = data.today;
+        const hour = new Date().getHours();
+        const greeting = hour < 11 ? '早安' : (hour < 17 ? '午安' : '晚上好');
+        $('greeting').textContent = `${greeting}, Wayne`;
+        $('today-date').textContent = data.today.date;
+
+        renderMacros(today, data.targets);
+        renderMeals(data);
+        renderBodyMetrics(data);
+        renderRecovery(today);
+        renderPhase(data);
+        renderWorkouts(today);
+
+        document.querySelectorAll('.chart-tab').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.chart-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderCharts(data, parseInt(btn.dataset.period));
+          });
+        });
+        renderCharts(data, 7);
+      }
+
+      async function doUnlock() {
+        const btn = $('unlock-btn');
+        const error = $('login-error');
+        const password = $('password').value.trim();
+        if (!password) { error.textContent = '请输入密码'; return; }
+        btn.disabled = true;
+        error.textContent = '解密中...';
+        try {
+          const encrypted = await loadEncryptedData();
+          const data = await decrypt(encrypted, password);
+          APP.data = data;
+          hide('login-screen');
+          show('dashboard');
+          renderAll();
+        } catch (e) {
+          console.error(e);
+          error.textContent = '解密失败：密码错误或数据损坏';
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      // Init
+      hide('loading');
+      show('login-screen');
+      $('unlock-btn').addEventListener('click', doUnlock);
+      $('password').addEventListener('keydown', e => { if (e.key === 'Enter') doUnlock(); });
+      $('logout-btn').addEventListener('click', () => {
+        APP.data = null;
+        hide('dashboard');
+        show('login-screen');
+        $('password').value = '';
+        $('login-error').textContent = '';
+        destroyCharts();
+      });
+    })();
   </script>
 </body>
 </html>
