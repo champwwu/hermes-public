@@ -725,24 +725,6 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
         `;
       }
 
-      function renderPhase(data) {
-        const p = data.phase || {};
-        const start = p.start ? new Date(p.start) : null;
-        const end = p.end ? new Date(p.end) : null;
-        if (start && end) {
-          const now = new Date(data.today.date);
-          const total = end - start;
-          const elapsed = now - start;
-          const pct = Math.max(0, Math.min(100, (elapsed / total) * 100));
-          const daysLeft = Math.ceil((end - now) / (1000*60*60*24));
-          $('phase-info').innerHTML = `阶段 ${p.phase || '1'} · ${p.start} 至 ${p.end} · 剩余 ${daysLeft} 天`;
-          $('phase-fill').style.width = pct + '%';
-        } else {
-          $('phase-info').textContent = '阶段信息未配置';
-          $('phase-fill').style.width = '0%';
-        }
-      }
-
       function renderWorkouts(data, period) {
         const cutoff = new Date();
         cutoff.setDate(cutoff.getDate() - period + 1);
@@ -872,7 +854,6 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
         renderMacros(today, data.targets);
         renderMeals(data);
         renderBodyMetrics(data);
-        renderPhase(data);
 
         // Trend tabs
         document.querySelectorAll('.trend-tab').forEach(btn => {
