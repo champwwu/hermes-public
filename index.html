@@ -423,13 +423,6 @@
       <div class="body-grid" id="body-metrics"></div>
     </div>
 
-    <!-- Recovery -->
-    <div class="card">
-      <div class="card-title">恢复 / 准备度</div>
-      <div class="recovery-grid" id="recovery-grid"></div>
-      <div class="section-total" id="readiness-advice" style="margin-top:14px;white-space:pre-wrap;line-height:1.5;"></div>
-    </div>
-
     <!-- Phase Progress -->
     <div class="card">
       <div class="card-title">阶段进度</div>
@@ -446,8 +439,6 @@
       </div>
       <div id="charts-container">
         <div class="chart-container"><canvas id="weight-chart"></canvas></div>
-        <div class="chart-container"><canvas id="macros-chart"></canvas></div>
-        <div class="chart-container"><canvas id="recovery-chart"></canvas></div>
       </div>
     </div>
 
@@ -720,40 +711,6 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
         `;
       }
 
-      function renderRecovery(today) {
-        const r = today.recovery || {};
-        const score = r.readiness_score || 0;
-        $('recovery-grid').innerHTML = `
-          <div class="recovery-item">
-            <div class="label">准备度</div>
-            <div class="readiness-score" style="--score:${score}">${Math.round(score)}</div>
-          </div>
-          <div class="recovery-item">
-            <div class="label">睡眠</div>
-            <div class="value">${r.sleep_min ? (r.sleep_min/60).toFixed(2) + 'h' : '—'}</div>
-            <div class="delta">评分 ${r.sleep_score || '—'}</div>
-          </div>
-          <div class="recovery-item">
-            <div class="label">HRV</div>
-            <div class="value">${r.hrv_ms || '—'} <span style="font-size:0.7rem">ms</span></div>
-            <div class="delta">${r.hrv_status || ''}</div>
-          </div>
-          <div class="recovery-item">
-            <div class="label">静息心率</div>
-            <div class="value">${r.rhr || '—'} <span style="font-size:0.7rem">bpm</span></div>
-          </div>
-          <div class="recovery-item">
-            <div class="label">Body Battery</div>
-            <div class="value">${r.body_battery || '—'}</div>
-          </div>
-          <div class="recovery-item">
-            <div class="label">主观疲劳</div>
-            <div class="value">${r.fatigue_subj || '—'}</div>
-          </div>
-        `;
-        $('readiness-advice').textContent = r.briefing_advice || '暂无建议';
-      }
-
       function renderPhase(data) {
         const p = data.phase || {};
         const start = p.start ? new Date(p.start) : null;
@@ -798,8 +755,6 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
         destroyCharts();
         const labels = data.history.dates.slice(-period);
         const body = data.history.body.slice(-period);
-        const macros = data.history.macros.slice(-period);
-        const rec = data.history.recovery.slice(-period);
 
         const weights = body.map(b => b?.weight_kg || null);
         const bodyFat = body.map(b => b?.body_fat_pct || null);
@@ -825,48 +780,6 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
             }
           }
         });
-
-        const ctxM = $('macros-chart').getContext('2d');
-        APP.charts.macros = new Chart(ctxM, {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [
-              { label: '热量 (kcal)', data: macros.map(m => m.kcal), backgroundColor: 'rgba(34,211,238,0.7)' },
-              { label: '蛋白质 (g)', data: macros.map(m => m.protein_g), backgroundColor: 'rgba(74,222,128,0.7)' },
-            ]
-          },
-          options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: '#9aa3b2' } } },
-            scales: {
-              x: { ticks: { color: '#9aa3b2' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-              y: { ticks: { color: '#9aa3b2' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-            }
-          }
-        });
-
-        const ctxR = $('recovery-chart').getContext('2d');
-        APP.charts.recovery = new Chart(ctxR, {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [
-              { label: '准备度', data: rec.map(r => r?.readiness_score || null), borderColor: '#818cf8', backgroundColor: 'rgba(129,140,248,0.1)', tension: 0.3, fill: true, pointRadius: 3 },
-              { label: 'HRV', data: rec.map(r => r?.hrv_ms || null), borderColor: '#4ade80', tension: 0.3, fill: false, pointRadius: 3, yAxisID: 'y1' }
-            ]
-          },
-          options: {
-            responsive: true, maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { labels: { color: '#9aa3b2' } } },
-            scales: {
-              x: { ticks: { color: '#9aa3b2' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-              y: { ticks: { color: '#9aa3b2' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-              y1: { position: 'right', ticks: { color: '#4ade80' }, grid: { drawOnChartArea: false } }
-            }
-          }
-        });
       }
 
       function renderAll() {
@@ -880,7 +793,6 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
         renderMacros(today, data.targets);
         renderMeals(data);
         renderBodyMetrics(data);
-        renderRecovery(today);
         renderPhase(data);
         renderWorkouts(today);
 
