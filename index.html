@@ -226,13 +226,17 @@
       margin-bottom: 14px;
       flex-wrap: wrap;
     }
-    .date-picker select, .date-picker button {
+    .date-picker select, .date-picker input[type="date"], .date-picker button {
       background: var(--surface-2);
       border: 1px solid var(--border);
       color: var(--text);
       padding: 10px 12px;
       border-radius: 10px;
       font-size: 0.9rem;
+    }
+    .date-picker input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      cursor: pointer;
     }
     .date-picker button { cursor: pointer; }
     .meal-section { margin-bottom: 14px; }
@@ -406,7 +410,7 @@
     <div class="card">
       <div class="card-title">饮食记录</div>
       <div class="date-picker">
-        <select id="meal-date-select"></select>
+        <input type="date" id="meal-date-input">
         <button id="prev-day">← 前一天</button>
         <button id="next-day">后一天 →</button>
       </div>
@@ -434,17 +438,22 @@
     <div class="card">
       <div class="card-title">趋势</div>
       <div class="chart-tabs">
-        <button class="chart-tab active" data-period="7">7 天</button>
-        <button class="chart-tab" data-period="30">30 天</button>
+        <button class="trend-tab chart-tab active" data-period="7">7 天</button>
+        <button class="trend-tab chart-tab" data-period="30">30 天</button>
       </div>
       <div id="charts-container">
         <div class="chart-container"><canvas id="weight-chart"></canvas></div>
+        <div class="chart-container"><canvas id="calories-chart"></canvas></div>
       </div>
     </div>
 
     <!-- Workouts -->
     <div class="card">
-      <div class="card-title">今日训练</div>
+      <div class="card-title">训练记录</div>
+      <div class="chart-tabs">
+        <button class="workout-tab chart-tab active" data-period="7">7 天</button>
+        <button class="workout-tab chart-tab" data-period="30">30 天</button>
+      </div>
       <div class="workout-list" id="workout-list"></div>
     </div>
   </div>
@@ -632,15 +641,22 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
       function renderMeals(data) {
         const dates = data.history.dates;
         const mealsByDate = data.history._mealsByDate || {};
-        const select = $('meal-date-select');
-        select.innerHTML = dates.slice().reverse().map(d => `<option value="${d}">${d}</option>`).join('');
-        select.value = data.today.date;
+        const input = $('meal-date-input');
+        if (dates.length) {
+          input.min = dates[0];
+          input.max = dates[dates.length - 1];
+        }
+        input.value = data.today.date;
 
         function renderDate(date) {
           const dayMeals = mealsByDate[date] || {};
           const total = data.history.macros[data.history.dates.indexOf(date)] || {kcal:0, protein_g:0, carbs_g:0, fat_g:0};
-          const order = ['早餐','午餐','晚餐','加餐','上午加餐','其他'];
-          const types = Object.keys(dayMeals).sort((a,b) => order.indexOf(a)-order.indexOf(b));
+          const order = ['早餐','早加餐','午餐','下午加餐','晚餐','晚加餐','加餐','上午加餐','其他'];
+          const known = new Set(order);
+          const present = Object.keys(dayMeals);
+          const knownTypes = present.filter(t => known.has(t)).sort((a,b) => order.indexOf(a)-order.indexOf(b));
+          const otherTypes = present.filter(t => !known.has(t)).sort();
+          const types = [...knownTypes, ...otherTypes];
           let html = '';
           if (types.length === 0) {
             html = '<div class="empty-state">当日无饮食记录</div>';
@@ -661,16 +677,19 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
           $('meal-total').innerHTML = `${formatNum(total.kcal,0)} kcal · 蛋白 ${formatNum(total.protein_g,1)}g · 碳水 ${formatNum(total.carbs_g,1)}g · 脂肪 ${formatNum(total.fat_g,1)}g`;
         }
 
+        function stepDate(delta) {
+          const idx = data.history.dates.indexOf(input.value);
+          const newIdx = idx + delta;
+          if (newIdx >= 0 && newIdx < data.history.dates.length) {
+            input.value = data.history.dates[newIdx];
+            renderDate(input.value);
+          }
+        }
+
         renderDate(data.today.date);
-        select.addEventListener('change', () => renderDate(select.value));
-        $('prev-day').addEventListener('click', () => {
-          const idx = data.history.dates.indexOf(select.value);
-          if (idx > 0) { select.value = data.history.dates[idx-1]; renderDate(select.value); }
-        });
-        $('next-day').addEventListener('click', () => {
-          const idx = data.history.dates.indexOf(select.value);
-          if (idx < data.history.dates.length-1) { select.value = data.history.dates[idx+1]; renderDate(select.value); }
-        });
+        input.addEventListener('change', () => renderDate(input.value));
+        $('prev-day').addEventListener('click', () => stepDate(-1));
+        $('next-day').addEventListener('click', () => stepDate(1));
       }
 
       function renderBodyMetrics(data) {
@@ -729,21 +748,44 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
         }
       }
 
-      function renderWorkouts(today) {
-        const ws = today.workouts || [];
-        if (ws.length === 0) {
-          $('workout-list').innerHTML = '<div class="empty-state">今日无训练记录</div>';
+      function renderWorkouts(data, period) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - period + 1);
+        const all = data.workouts_60d || [];
+        const filtered = all.filter(w => new Date(w.date) >= cutoff).sort((a,b) => b.date.localeCompare(a.date) || 0);
+
+        if (filtered.length === 0) {
+          $('workout-list').innerHTML = '<div class="empty-state">该时段无训练记录</div>';
           return;
         }
-        $('workout-list').innerHTML = ws.map(w => `
-          <div class="workout-item">
-            <div>
-              <div class="workout-name">${w.name || w.type || '训练'}</div>
-              <div class="workout-meta">${w.duration_min || 0} 分钟 · ${(w.distance_km || 0).toFixed(2)} km</div>
-            </div>
-            <div class="workout-cals">${w.calories || 0} kcal</div>
-          </div>
-        `).join('');
+
+        // Group by date
+        const byDate = {};
+        for (const w of filtered) {
+          if (!byDate[w.date]) byDate[w.date] = [];
+          byDate[w.date].push(w);
+        }
+
+        let html = '';
+        for (const date of Object.keys(byDate).sort((a,b) => b.localeCompare(a))) {
+          const dayWorkouts = byDate[date];
+          const isToday = date === data.today.date;
+          html += `<div style="margin-bottom:14px;"><div style="font-size:0.8rem;color:var(--accent);margin-bottom:6px;font-weight:600;">${date}${isToday ? ' · 今天' : ''}</div>`;
+          for (const w of dayWorkouts) {
+            const isRun = /跑|run|marathon|马拉松|5k|10k|半马/i.test(w.name || w.type || '');
+            const dist = isRun && w.distance_km ? ` · ${Number(w.distance_km).toFixed(2)} km` : '';
+            html += `
+              <div class="workout-item">
+                <div>
+                  <div class="workout-name">${w.name || w.type || '训练'}</div>
+                  <div class="workout-meta">${w.duration_min || 0} 分钟${dist}</div>
+                </div>
+                <div class="workout-cals">${w.calories || 0} kcal</div>
+              </div>`;
+          }
+          html += '</div>';
+        }
+        $('workout-list').innerHTML = html;
       }
 
       function destroyCharts() {
@@ -755,6 +797,7 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
         destroyCharts();
         const labels = data.history.dates.slice(-period);
         const body = data.history.body.slice(-period);
+        const macros = data.history.macros.slice(-period);
 
         const weights = body.map(b => b?.weight_kg || null);
         const bodyFat = body.map(b => b?.body_fat_pct || null);
@@ -772,11 +815,50 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
           options: {
             responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { labels: { color: '#9aa3b2' } } },
+            plugins: { legend: { labels: { color: '#9aa3b2' } }, title: { display: true, text: '体重 / 体脂率', color: '#9aa3b2', font: { size: 14 } } },
             scales: {
               x: { ticks: { color: '#9aa3b2' }, grid: { color: 'rgba(255,255,255,0.05)' } },
               y: { ticks: { color: '#9aa3b2' }, grid: { color: 'rgba(255,255,255,0.05)' } },
               y1: { position: 'right', ticks: { color: '#fb7185' }, grid: { drawOnChartArea: false } }
+            }
+          }
+        });
+
+        const ctxC = $('calories-chart').getContext('2d');
+        const kcals = macros.map(m => m.kcal || null);
+        const targetKcal = (data.targets && data.targets.kcal) ? data.targets.kcal : 2000;
+        APP.charts.calories = new Chart(ctxC, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: '热量 (kcal)',
+                data: kcals,
+                backgroundColor: kcals.map(v => v && v > targetKcal ? 'rgba(251,113,133,0.7)' : 'rgba(34,211,238,0.7)'),
+                order: 2
+              },
+              {
+                label: `目标 ${targetKcal}`,
+                data: labels.map(() => targetKcal),
+                type: 'line',
+                borderColor: '#facc15',
+                borderWidth: 2,
+                borderDash: [6, 6],
+                pointRadius: 0,
+                fill: false,
+                order: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              title: { display: true, text: '每日热量', color: '#9aa3b2', font: { size: 14 } }
+            },
+            scales: {
+              x: { ticks: { color: '#9aa3b2' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+              y: { ticks: { color: '#9aa3b2' }, grid: { color: 'rgba(255,255,255,0.05)' } }
             }
           }
         });
@@ -794,16 +876,26 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
         renderMeals(data);
         renderBodyMetrics(data);
         renderPhase(data);
-        renderWorkouts(today);
 
-        document.querySelectorAll('.chart-tab').forEach(btn => {
+        // Trend tabs
+        document.querySelectorAll('.trend-tab').forEach(btn => {
           btn.addEventListener('click', () => {
-            document.querySelectorAll('.chart-tab').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.trend-tab').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             renderCharts(data, parseInt(btn.dataset.period));
           });
         });
         renderCharts(data, 7);
+
+        // Workout tabs
+        document.querySelectorAll('.workout-tab').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.workout-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderWorkouts(data, parseInt(btn.dataset.period));
+          });
+        });
+        renderWorkouts(data, 7);
       }
 
       async function doUnlock() {
