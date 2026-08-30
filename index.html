@@ -598,7 +598,9 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
       function hide(id) { $(id).classList.add('hidden'); }
 
       async function loadEncryptedData() {
-        const res = await fetch('data.enc');
+        // Cache-bust so GitHub Pages serves the latest data.enc
+        const url = `data.enc?v=${Date.now()}`;
+        const res = await fetch(url);
         if (!res.ok) throw new Error('无法加载加密数据');
         return await res.text();
       }
