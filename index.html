@@ -798,6 +798,7 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
         const labels = data.history.dates.slice(-period);
         const body = data.history.body.slice(-period);
         const macros = data.history.macros.slice(-period);
+        const targetsByDate = data.daily_targets || {};
 
         const weights = body.map(b => b?.weight_kg || null);
         const bodyFat = body.map(b => b?.body_fat_pct || null);
@@ -826,7 +827,8 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
 
         const ctxC = $('calories-chart').getContext('2d');
         const kcals = macros.map(m => m.kcal || null);
-        const targetKcal = (data.targets && data.targets.kcal) ? data.targets.kcal : 2000;
+        const targetKcals = labels.map(d => (targetsByDate[d] && targetsByDate[d].kcal) ? targetsByDate[d].kcal : 1700);
+        const avgTarget = Math.round(targetKcals.reduce((a,b)=>a+b,0) / targetKcals.length) || 1700;
         APP.charts.calories = new Chart(ctxC, {
           type: 'bar',
           data: {
@@ -835,12 +837,12 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
               {
                 label: '热量 (kcal)',
                 data: kcals,
-                backgroundColor: kcals.map(v => v && v > targetKcal ? 'rgba(251,113,133,0.7)' : 'rgba(34,211,238,0.7)'),
+                backgroundColor: kcals.map((v, i) => v && v > targetKcals[i] ? 'rgba(251,113,133,0.7)' : 'rgba(34,211,238,0.7)'),
                 order: 2
               },
               {
-                label: `目标 ${targetKcal}`,
-                data: labels.map(() => targetKcal),
+                label: `目标 ${avgTarget}`,
+                data: targetKcals,
                 type: 'line',
                 borderColor: '#facc15',
                 borderWidth: 2,
