@@ -909,8 +909,9 @@ rCX/nXxG4KKc5o0V3ZlcSjGHU05z3OF0KymJfjz9G9b2OhCeAL6uqg==
           show('dashboard');
           renderAll();
         } catch (e) {
-          console.error(e);
-          error.textContent = '解密失败：密码错误或数据损坏';
+          window.lastDecryptError = e;
+          console.error('Decrypt error:', e);
+          error.textContent = '解密失败：密码错误或数据损坏 (' + (e.message || '') + ')';
         } finally {
           btn.disabled = false;
         }
